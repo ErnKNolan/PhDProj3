@@ -49,7 +49,7 @@ ties <- "ties_prob"
 #Run the trial
 test <- list()
 for(j in 1){
-  test[[length(test)+1]] <- future_replicate(100,future.seed=42L,runSimTrial(properties,mod,outdir,j,adaption,drop_cut,stop_cut,ties))
+  test[[length(test)+1]] <- future_replicate(1,future.seed=42L,runSimTrial(properties,mod,outdir,j,adaption,drop_cut,stop_cut,ties))
 }
 #saveRDS(test,here("Data","adaptprob15_sim.RDS"))
 #Take out the trial properties

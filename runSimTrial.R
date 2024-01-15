@@ -17,7 +17,8 @@ runSimTrial <- function(properties = properties, mod = mod, outdir=outdir, j=j, 
   int_prior_sd <- interim[[1]][["sd"]][12]
   trt_prior_mu <- as.vector(interim[[1]][["mean"]][9:11])
   trt_prior_sd <- as.vector(interim[[1]][["sd"]][9:11])
-  
+  print(trt_prior_mu)
+  print(trt_prior_sd)
   #add the simulated results into the interim dataset
   resp_clus <- cbind(intclusters,resp)
   

@@ -50,7 +50,9 @@ transformed parameters {
 }
 model {
   b0~normal(int_prior_mu,int_prior_sd);
-  theta_trt[N_trt_groups-1]~normal(trt_prior_mu,trt_prior_sd);
+  theta_trt[1]~normal(trt_prior_mu[1],trt_prior_sd[1]);
+  theta_trt[2]~normal(trt_prior_mu[2],trt_prior_sd[2]);
+  theta_trt[3]~normal(trt_prior_mu[3],trt_prior_sd[3]);
   lkj_corr ~ lkj_corr_cholesky(5); 
   alpha_site_raw~std_normal();
   
@@ -85,6 +87,11 @@ ypred = bernoulli_logit_rng(mean(b0_site) + Q_ast * theta_trt);
   int ov_fut; //overall futility rule
     if(max(beta_trt) == beta_trt[1]) ov_fut = 1;
     else ov_fut = 0;
+
+//prior predictive check;
+array[N_trt_groups-1] real thetarep;
+
+  thetarep[N_trt_groups-1] = normal_rng(trt_prior_mu[N_trt_groups-1],trt_prior_sd[N_trt_groups-1]);
 
 
 }

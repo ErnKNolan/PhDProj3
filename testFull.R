@@ -94,7 +94,7 @@ testFull <- function(t,expdat,rho,mod,outdir,int_dat,properties_int,int_prior_mu
                  int_prior_mu = int_prior_mu, int_prior_sd = int_prior_sd,
                  trt_prior_mu = trt_prior_mu, trt_prior_sd = trt_prior_sd)
 
-      res <- mod$sample(
+      res <- mod_full$sample(
       data = data, 
       init = 0,
       iter_warmup = 250,
@@ -108,7 +108,7 @@ testFull <- function(t,expdat,rho,mod,outdir,int_dat,properties_int,int_prior_mu
     print(j)
     time <- toc()
     time <- time$toc - time$tic
-    results <- list(data.frame(res$summary(variables=c("pred_prob_trt","beta_trt","pp_trt2","pp_trt3","pp_trt4")),time=time))
+    results <- list(data.frame(res$summary(variables=c("pred_prob_trt","beta_trt","pp_trt2","pp_trt3","pp_trt4","thetarep")),time=time))
   },
   
   error=function(e) { message(conditionMessage(e)) 
