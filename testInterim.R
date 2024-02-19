@@ -1,3 +1,6 @@
+#AUTHOR: Erin Nolan
+#TITLE: PROJECT 3 FIT BAYESIAN MODELS ADAPTIVE
+#PURPOSE: FUNCTION TO MAKE THE GENERATED DATASET AND FIT INTERIM MODEL
 
 #t = number of treatment groups
 #expdat = the generated dataset (without response) to read in
@@ -24,8 +27,6 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,...){
   names(theta)<-c("site.(Intercept)")
   #fitting model
   results <- vector()
-  return <- tryCatch({
-    
     resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|site), nsim = 1, family = binomial, 
                                                newdata = expdat,newparams = list(beta=beta, theta=theta)))
     
@@ -43,9 +44,9 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,...){
       iter_sampling = 250,
       chains = 4, 
       parallel_chains = 1,
-      adapt_delta = 0.99,
+      adapt_delta = 0.8,
       refresh = 0, 
-      max_treedepth=12,
+      max_treedepth=10,
       output_dir=outdir
       
     )
@@ -53,13 +54,7 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,...){
     time <- toc()
     time <- time$toc - time$tic
     #pp_trt1 etc are the predictive prob that the treatment has the largest beta
-    results <- list(data.frame(res$summary(variables=c("pred_prob_trt","pp_trt2","pp_trt3","pp_trt4","ov_fut","theta_trt","b0")),time=time),resp=list(resp))
-    
-  },
-  
-  error=function(e) { message(conditionMessage(e)) 
-    res <- list(data.frame(variable=NA,mean=NA,median=NA,sd=NA,mad=NA,q5=NA,q95=NA,rhat=NA,ess_bulk=NA,ess_tail=NA,time=NA))
-  })
+    results <- list(data.frame(res$summary(variables=c("pred_prob_trt","pp_trt2","pp_trt3","pp_trt4","ov_fut","beta_trt")),time=time),resp=list(resp))
   
   return(results)
   
