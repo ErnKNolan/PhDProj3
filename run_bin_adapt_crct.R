@@ -35,10 +35,10 @@ properties <- rbind(properties) %>%
 #Put in the paths and options for the trial
 plan(multisession,workers=20)
 #baepath <- "D:/Programs/PhDProject2/Programs/adapt_arm.stan"
-#set_cmdstan_path(path="C:/Users/nolan/Documents/.cmdstan/cmdstan-2.33.1")
-baepath <- "C:/Users/ENolan/OneDrive - HMRI/Documents/PhDProject2/Programs/adapt_arm.stan"
-set_cmdstan_path(path="C:/Users/ENolan/OneDrive - HMRI/Documents/.cmdstan/cmdstan-2.33.1")
-outdir <- "C:/Users/ENolan/Downloads/Sims"
+set_cmdstan_path(path="C:/Users/nolan/Documents/.cmdstan/cmdstan-2.33.1")
+baepath <- "D:/Programs/PhDProject3/Programs/adapt_arm.stan"
+#set_cmdstan_path(path="C:/Users/ENolan/OneDrive - HMRI/Documents/.cmdstan/cmdstan-2.33.1")
+outdir <- "J:/Sims"
 #outdir <- "E:/Simulations"
 mod <- cmdstan_model(baepath, pedantic = F, compile=T)
 adaption <- "both" #this can be early_stopping, arm_dropping, or both
@@ -50,10 +50,10 @@ t <- 4
 ties <- "ties_prob" 
 #Run the trial
 test <- list()
-for(j in 40:42){
+for(j in 1:48){
   test[[length(test)+1]] <- future_replicate(3,future.seed=42L,runSimTrial(properties,mod,outdir,j,adaption,drop_cut,stop_cut,ties,t=t,nblock=properties$nblock))
 }
-#saveRDS(test,here("Data","testnum_sim.RDS"))
+#saveRDS(test,here("Data","pilot_sim.RDS"))
 #Take out the trial properties
 trial_props <- list()
 for(j in 1:60){

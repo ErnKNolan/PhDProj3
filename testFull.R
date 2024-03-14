@@ -60,6 +60,7 @@ testFull <- function(t,expdat,rho,mod,outdir,int_dat,...){
     print(j)
     time <- toc()
     time <- time$toc - time$tic
+    resp_dat %>% summarise(n = n_distinct(site)) %>% print()
     results <- list(data.frame(res$summary(variables=c("pred_prob_trt","pp_trt2","pp_trt3","pp_trt4","ov_fut","beta_trt")),time=time),resp=list(resp))
   
   return(results)

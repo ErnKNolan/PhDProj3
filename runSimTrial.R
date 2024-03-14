@@ -58,7 +58,7 @@ for(i in 1:nint){
     drops[,i:(properties$nblock[j]-1)] <- 0
   }
   #assigning clusters based on whats dropped
-  mat[,i] <- assignCluster(mat=mat, k=properties$k[j], nblock=properties$nblock[j]-1, drops=drops, i=i)
+  mat[,i] <- assignCluster(mat=mat, k=properties$k[j]-floor(properties$k[j]/(properties$nblock[j])), nblock=properties$nblock[j]-1, drops=drops, i=i)
   #rewriting the properties to read into data generation
   for(k in 1:t-1){
     x <- paste0("kt",k+1)
