@@ -1,6 +1,6 @@
 #AUTHOR: Erin Nolan
-#TITLE: PROJECT 2 NON-ADAPTIVE SIMULATION
-#PURPOSE: RUNS THE SIMULATIONS FOR MULTIARM cRCT UNDER VARIOUS PROPERTIES
+#TITLE: PROJECT 3
+
 # install.packages("devtools")
 #devtools::install_github("matherealize/looplot")
 
@@ -9,44 +9,19 @@ pacman::p_load(here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,loopl
 #read in the data
 #outsim2 <- readRDS(file=here("Data","adapt_outsim.RDS"))
 
-#missings--------------------------------------------
-missings <- outsim2 %>% 
-  filter(variable != "pp_trt1",
-         is.na(ess_tail) | is.na(ess_bulk))
-
-#Convergence diagnostics-----------------------------
-# ESS
-ESS <- outsim2 %>% 
-  filter(variable != "pp_trt1") %>%
-  group_by(property) %>%
-  summarise(m_ess_bulk = mean(ess_bulk,na.rm=TRUE),
-            m_ess_tail = mean(ess_tail,na.rm=TRUE))
-
-# potential-scale-down-reduction-factor R
-scale_downR <- outsim2 %>%
-  filter(variable != "pp_trt1") %>%
-  group_by(property) %>%
-  summarise(m_Rhat = mean(rhat,na.rm=TRUE))
-
-# MC Error of each iteration for parameters of interest
-MCerror <- outsim2 %>%
-  group_by(property,variable) %>%
-  mutate(trt = case_when(variable == "pred_prob_trt[1]" ~ t1,
-                         variable == "pred_prob_trt[2]" ~ t2,
-                         variable == "pred_prob_trt[3]" ~ t3,
-                         variable == "pred_prob_trt[4]" ~ t4)) %>%
-  filter(variable == "pp_trt1") %>%
-  simsum(estvarname="mean",true="trt",se="sd",method=c("property")) 
-MCerror[["summ"]] %>% filter(stat == "power") %>% kable(MCerror)
 
 #Power for these sims-----------------------------------------------
 #Power defined as number of sims that the lower CrI of trt 1 greater than all other groups upper CrI
 power <- outsim2 %>% 
   filter(variable %in% c("pp_trt2","pp_trt3","pp_trt4")) %>%
-  pivot_wider(id_cols=c(property,sim),names_from=variable,values_from=mean) %>%
-  mutate(bayesr = ifelse(pp_trt2 >= 0.95 | pp_trt3 >= 0.95 | pp_trt4 >= 0.95,1,0)) %>%
+  pivot_wider(id_cols=c(property,sim,trt_eff_scen),names_from=variable,values_from=mean) %>%
+  mutate(bayesr = ifelse(trt_eff_scen == 2 & pp_trt4 >=0.95,1,
+                         ifelse(trt_eff_scen == 3 & (pp_trt2 >= 0.95 | pp_trt3 >= 0.95 | pp_trt4 >= 0.95),1,0))) %>%
   group_by(property) %>%
   summarise(bayesr = sum(bayesr)/n())
+
+
+
 
 #merge back into outsim
 outsim3 <- merge(outsim2,power,by="property") %>%
