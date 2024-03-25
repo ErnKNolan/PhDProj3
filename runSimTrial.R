@@ -25,7 +25,7 @@ for(i in 1:nint){
   if(i==1){
     clusters <- data.frame(interim = properties_int$interim, kt2 = properties_int$kt2, kt3 = properties_int$kt3, kt4 = properties_int$kt4)
   } else {
-    clusters <- data.frame(interim = properties_int$interim, kt2 = sum(mat[1,])+properties_int$interim, kt3 = sum(mat[2,])+properties_int$interim, kt4 = sum(mat[3,])+properties_int$interim)
+    clusters <- data.frame(interim = properties_int$interim*i, kt2 = sum(mat[1,])+properties_int$interim, kt3 = sum(mat[2,])+properties_int$interim, kt4 = sum(mat[3,])+properties_int$interim)
   }
   #making clusters for the interim dataset
   intclusters <- makeClusters(t=4,nid=properties$n_per_k[j],
