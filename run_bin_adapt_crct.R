@@ -2,7 +2,7 @@
 #TITLE: PROJECT 3 ADAPTIVE SIMULATION
 #PURPOSE: RUNS THE SIMULATIONS FOR MULTIARM cRCT UNDER VARIOUS PROPERTIES
 
-pacman::p_load(future,here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan)
+pacman::p_load(future,here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan,tidyr)
 
 source(here("Programs","make_clusters.R"))
 source(here("Programs","testFull.R"))
@@ -15,7 +15,7 @@ source(here("Programs","assignCluster.R"))
 #The different trial properties
 set.seed(656038738)
 #The first interim is after either 3 or 5 clusters (out of 5 and 10)
-properties <- expand.grid(trt_eff_scen = c(2,3), ctrl_prop = c(0.1), icc = c(0.05,0.2), n_per_k = c(25,50,75), k = c(15,25),nblock=c(2,3))
+properties <- expand.grid(trt_eff_scen = c(2,3), ctrl_prop = c(0.1), icc = c(0.05,0.2), n_per_k = c(25,50,75), k = c(15,25),nblock=c(2,3,4))
 
 #bind to properties
 properties <- rbind(properties) %>%
@@ -40,17 +40,16 @@ set_cmdstan_path(path="C:/Users/ENolan/OneDrive - HMRI/Documents/.cmdstan/cmdsta
 #outdir <- "J:/Sims"
 outdir <- "C:/Users/ENolan/Downloads/Sims"
 mod <- cmdstan_model(baepath, pedantic = F, compile=T)
+mod.red <- cmdstan_model("C:/Users/ENolan/OneDrive - HMRI/Documents/PhDProject2/Programs/PhDProject3/Programs/adapt_arm_reduced.stan", pedantic = F, compile=T);
 adaption <- "both" #this can be early_stopping, arm_dropping, or both
 drop_cut <- 0.05
 stop_cut <- 0.15
 t <- 4
-#this can be ties_prob or ties_opt. Ties opt drops the highest constraint arm if there is a tie for which has the lowest probability of success
-#ties_prob drops the arm with the lowest pred prob estimate if there is a tie for which has the lowest probability of success
-ties <- "ties_prob" 
+
 #Run the trial
-test <- list()
-for(j in c(37)){
-  test[[length(test)+1]] <- future_replicate(1,future.seed=42L,runSimTrial(properties,mod,outdir,j,adaption,drop_cut,stop_cut,ties,t=t,nblock=properties$nblock))
+#test <- list()
+for(j in c(62)){
+  test[[length(test)+1]] <- future_replicate(15,future.seed=42L,runSimTrial(properties,mod,outdir,j,adaption,drop_cut,stop_cut,t=t,nblock=properties$nblock))
 }
 #saveRDS(test,here("Data","pilot_sim.RDS"))
 #Take out the trial properties
@@ -79,7 +78,7 @@ interim <- bind_rows(interim)
 
 #Take out the full analyses
 tempd <- list()
-for(j in c(1:28)){
+for(j in c(1:43)){
   for(i in seq(2,12500,5)){
     tempd[[length(tempd)+1]] <- test[[j]][[i]]
     tempd[[length(tempd)]]$sim <- (i+3)/5
@@ -89,7 +88,7 @@ for(j in c(1:28)){
 outsim <- bind_rows(tempd)
 
 #merge in the properties of that simulation
-#properties2 <- properties %>% mutate(row = row_number()) 
+properties2 <- properties %>% mutate(row = row_number()) 
 #outsim2 <- merge(outsim,properties2,by.y=c("row"),by.x="property")
 #saveRDS(outsim2,here("Data","prob_outsim.RDS"))
 
@@ -97,7 +96,7 @@ outsim <- bind_rows(tempd)
 
 #pull out the cluster data
 clusts <- list()
-for(j in c(1:28)){
+for(j in c(1:43)){
   for(i in seq(5,12500,5)){
     clusts[[length(clusts)+1]] <- test[[j]][[i]]
   }
@@ -105,9 +104,9 @@ for(j in c(1:28)){
 
 #clean the cluster data
 clusters <- plyr::ldply(clusts, rbind) %>%
-  mutate(arm = rep(c("arm2","arm3","arm4"),times=28*2500),
-         property = rep(c(1:28),each=3*2500), #specify the property
-         sim = rep(c(1:2500),each=3,times=28)) %>% #specify the sim
+  mutate(arm = rep(c("arm2","arm3","arm4"),times=length(test)*2500),
+         property = rep(c(1:length(test)),each=3*2500), #specify the property
+         sim = rep(c(1:2500),each=3,times=length(test))) %>% #specify the sim
   rename(interim1 = `1`,
          interim2 = `2`) %>%
   pivot_wider(id_cols=c(property,sim),names_from = c(arm), values_from=c(interim1,interim2)) %>%

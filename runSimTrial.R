@@ -2,7 +2,7 @@
 #TITLE: PROJECT 3 RUN ADAPTIVE TRIAL
 #PURPOSE: RUN INTERIMS AND FINAL MODEL AND RETURN RESULTS
 
-runSimTrial <- function(properties = properties, mod = mod, outdir=outdir, j=j,t=t, adaption=adaption,drop_cut=drop_cut,stop_cut=stop_cut,ties=ties,nblock=nblock) {
+runSimTrial <- function(properties = properties, mod = mod, outdir=outdir, j=j,t=t, adaption=adaption,drop_cut=drop_cut,stop_cut=stop_cut,nblock=nblock) {
   
   #The interim clusters are full clusters divided by block
   properties$kt2 <- floor(properties$k[j]/(properties$nblock[j]))
@@ -49,7 +49,7 @@ for(i in 1:nint){
   
   #making the decision and getting the clusters
   properties_int <- makeDecision(properties = properties, interim_res = interim_res, j=j,
-                                 drop_cut = drop_cut, stop_cut = stop_cut, ties = ties)
+                                 drop_cut = drop_cut, stop_cut = stop_cut, ties = ties, drops = drops,i=i)
   #adding in what arm to drop based on decision
   if(properties_int$drop != "none"){
     drops[as.numeric(gsub(".*?([0-9]+).*", "\\1", properties_int$drop))-1,i:(properties$nblock[j]-1)] <- 0
