@@ -54,7 +54,7 @@ for(j in c(62)){
 #saveRDS(test,here("Data","pilot_sim.RDS"))
 #Take out the trial properties
 trial_props <- list()
-for(j in 1:20){
+for(j in 1:48){
   for(i in seq(3,12500,5)){
     trial_props[[length(trial_props)+1]] <- test[[j]][[i]]
     trial_props[[length(trial_props)]]$sim <- (i+2)/5
@@ -67,7 +67,7 @@ trial_props <- bind_rows(trial_props)
 #Take out the interim analyses
 interim <- list()
 for(j in 1:48){
-  for(i in seq(1,10,5)){
+  for(i in seq(1,12500,5)){
     interim[[length(interim)+1]] <- test[[j]][[i]]
     interim[[length(interim)]]$sim <- (i+4)/5
     interim[[length(interim)]]$property <- j
@@ -78,7 +78,7 @@ interim <- bind_rows(interim)
 
 #Take out the full analyses
 tempd <- list()
-for(j in c(1:43)){
+for(j in c(1:48)){
   for(i in seq(2,12500,5)){
     tempd[[length(tempd)+1]] <- test[[j]][[i]]
     tempd[[length(tempd)]]$sim <- (i+3)/5
@@ -89,14 +89,14 @@ outsim <- bind_rows(tempd)
 
 #merge in the properties of that simulation
 properties2 <- properties %>% mutate(row = row_number()) 
-#outsim2 <- merge(outsim,properties2,by.y=c("row"),by.x="property")
+outsim2 <- merge(outsim,properties2,by.y=c("row"),by.x="property")
 #saveRDS(outsim2,here("Data","prob_outsim.RDS"))
 
 #Using https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4319656/pdf/nihms657495.pdf page 5 for adaptive early stopping so far
 
 #pull out the cluster data
 clusts <- list()
-for(j in c(1:43)){
+for(j in c(1:48)){
   for(i in seq(5,12500,5)){
     clusts[[length(clusts)+1]] <- test[[j]][[i]]
   }
@@ -119,4 +119,16 @@ clusters <- plyr::ldply(clusts, rbind) %>%
          stop_int2 = ifelse(interim2_arm2 == 0 & interim2_arm3 == 0 & interim2_arm4 == 0,1,0))
 
 outsim2 <- merge(outsim,clusters,by.x=c("property","sim"),by.y = c("property","sim"))
-
+saveRDS(clusters,here("Data","clusters.RDS"))
+#sensitivity analysis 1st interim of 2 interim trials
+#Take out the interim analyses
+interim_s <- list()
+for(j in 1:24){
+  for(i in seq(1,12500,5)){
+    interim_s[[length(interim_s)+1]] <- test[[j]][[i]]
+    interim_s[[length(interim_s)]]$sim <- (i+4)/5
+    interim_s[[length(interim_s)]]$property <- j
+  }
+}
+interim_s <- bind_rows(interim_s)
+#saveRDS(interim_s,here("Data","adapt_interim_s.RDS"))
