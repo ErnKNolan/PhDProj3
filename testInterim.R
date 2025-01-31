@@ -7,7 +7,7 @@
 #rho = intra-cluster correlation
 #mod = model set by cmdstan_model
 #... = the proportion for each treatment group i.e t1=0.2, t2=0.5 etc
-testInterim <- function(t,expdat,rho,mod,outdir,int_dat,...){
+testInterim <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
   tic()
   prop <- list(...)
   comp <- (1:t)
@@ -40,8 +40,8 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,...){
     res <- mod$sample(
       data = data, 
       init = 0,
-      iter_warmup = 250,
-      iter_sampling = 250,
+      iter_warmup = draws,
+      iter_sampling = draws,
       chains = 4, 
       parallel_chains = 1,
       adapt_delta = 0.8,
