@@ -6,8 +6,7 @@
 pacman::p_load(here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan)
 
 source("make_clusters.R")
-source("runNonAdaptTrial.R")
-source("testInterim.R")
+source("nonAdaptTrial.R")
 
 #The different trial properties
 set.seed(656038738)
@@ -32,7 +31,6 @@ properties <- rbind(properties) %>%
 drawsdat <- properties$draws
 properties <- properties %>% dplyr::select(-draws)
 
-
 #set how many workers you want to use
 plan(multisession,workers=20) 
 
@@ -45,20 +43,19 @@ mod <- cmdstan_model(baepath, pedantic = F, compile=T)
 #run the trial
 #test <- list() #test is the list of all the output from the simulated trials
 for(j in 1:24){ #loops through properties 1 to 24
-  test[[length(test)+1]] <- future_replicate(5,runNonAdaptTrial(properties,mod,outdir,j,t=t,draws=drawsdat[j]),
+  test[[length(test)+1]] <- future_replicate(2500,nonAdaptTrial(properties,mod,outdir,j,t=t,draws=drawsdat[j]),
                                              future.seed = 42L)
-  saveRDS(test,"nonadapt_test.RDS")
+  saveRDS(test,"nonadapt_jan25.RDS")
 }
 
 nonadapt <- list()
 for(j in 1:24){
-  for(i in seq(1,12500,5)){
+  for(i in 1:10){
     nonadapt[[length(nonadapt)+1]] <- test[[j]][[i]]
-    nonadapt[[length(nonadapt)]]$sim <- (i+4)/5
+    nonadapt[[length(nonadapt)]]$sim <- i
     nonadapt[[length(nonadapt)]]$property <- j
   }
 }
 nonadapt <- bind_rows(nonadapt)
 properties2 <- properties %>% mutate(row = row_number()) 
 nonadapt_out <- merge(nonadapt,properties2,by.y=c("row"),by.x="property")
-saveRDS(nonadapt_out,here("Data","nonadapt_out.RDS"))
