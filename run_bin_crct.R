@@ -2,7 +2,7 @@
 #TITLE: NON-ADAPTIVE SIMULATIONS FOR OPTIMISING IMPLEMENTATION STRATEGIES
 #PURPOSE: RUNS THE SIMULATIONS FOR MULTIARM cRCT UNDER VARIOUS PROPERTIES
 
-#Run the functions defined in make_clusters and fit_bae
+#Run the functions defined in make_clusters and nonAdaptTrial
 pacman::p_load(here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan)
 
 source("make_clusters.R")
