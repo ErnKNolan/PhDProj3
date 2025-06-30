@@ -35,14 +35,17 @@ testFull <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
   resp_dat <- merge(resp_dat,int_dat,by=c("iid","site","trt"),all.x=TRUE) %>%
     within(., resp <- ifelse(!is.na(resp.y), resp.y, resp.x)) %>%
     dplyr::select(-resp.x,-resp.y) %>% 
-    arrange(site)
+    arrange(trt,site) %>%
+    mutate(site_unique = paste0(trt,site))
   
+expdat$siteunique <- paste0(expdat$trt,expdat$site)
+expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
   resp <- as.vector(resp_dat[,4])
   N_obs <- dim(expdat)[1]
-  N_site <- length(unique(expdat$site))
+  N_site <- length(unique(expdat$siteunique))
   N_trt_groups <- length(unique(expdat$trt))
   data <- list(N_obs = N_obs, N_site = N_site, N_trt_groups = N_trt_groups, 
-               site = expdat$site, trt = as.numeric(expdat$trt), resp = resp)
+               site = expdat$ascendsite, trt = as.numeric(expdat$trt), resp = resp)
   
   res <- mod$sample(
     data = data, 
