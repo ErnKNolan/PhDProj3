@@ -8,15 +8,22 @@ properties <- expand.grid(trt_eff_scen = c(2,3), ctrl_prop = c(0.1), icc = c(0.0
 properties <- rbind(properties) %>%
   mutate(t4 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.5,
                         trt_eff_scen == 2 ~ ctrl_prop+0.4,
-                        trt_eff_scen == 3 ~ ctrl_prop+0),
+                        trt_eff_scen == 3 ~ ctrl_prop+0,
+                        trt_eff_scen == 4 ~ ctrl_prop+0.4,
+                        trt_eff_scen == 5 ~ ctrl_prop+0.4),
          t3 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.3,
                         trt_eff_scen == 2 ~ ctrl_prop+0.3,
-                        trt_eff_scen == 3 ~ ctrl_prop+0),
+                        trt_eff_scen == 3 ~ ctrl_prop+0,
+                        trt_eff_scen == 4 ~ ctrl_prop+0.1,
+                        trt_eff_scen == 5 ~ ctrl_prop+0.35),
          t2 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.1,
                         trt_eff_scen == 2 ~ ctrl_prop+0.2,
-                        trt_eff_scen == 3 ~ ctrl_prop+0),
+                        trt_eff_scen == 3 ~ ctrl_prop+0,
+                        trt_eff_scen == 4 ~ ctrl_prop+0,
+                        trt_eff_scen == 5 ~ ctrl_prop+0.25),
          t1 = ctrl_prop,
          interim = floor(k/(nblock)))
+
 properties2 <- properties %>% mutate(row = row_number()) 
 
 trial_props <- list()
