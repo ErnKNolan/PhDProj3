@@ -27,34 +27,36 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
   names(theta)<-c("site.(Intercept)")
   #fitting model
   results <- vector()
-    resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|site), nsim = 1, family = binomial, 
-                                               newdata = expdat,newparams = list(beta=beta, theta=theta)))
+  resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|site), nsim = 1, family = binomial, 
+                                             newdata = expdat,newparams = list(beta=beta, theta=theta)))
+  
+  resp <- as.vector(resp[,1])
+  N_obs <- dim(expdat)[1]
+  expdat$siteunique <- paste0(expdat$trt,expdat$site)
+  expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
+  N_site <- length(unique(expdat$siteunique))
+  N_trt_groups <- length(unique(expdat$trt))
+  data <- list(N_obs = N_obs, N_site = N_site, N_trt_groups = N_trt_groups, 
+               site =  expdat$ascendsite, trt = as.numeric(expdat$trt), resp = resp)
+  
+  res <- mod$sample(
+    data = data, 
+    init = 0,
+    iter_warmup = draws,
+    iter_sampling = draws,
+    chains = 4, 
+    parallel_chains = 1,
+    adapt_delta = 0.8,
+    refresh = 0, 
+    max_treedepth=10,
+    output_dir=outdir
     
-    resp <- as.vector(resp[,1])
-    N_obs <- dim(expdat)[1]
-    N_site <- length(unique(expdat$site))
-    N_trt_groups <- length(unique(expdat$trt))
-    data <- list(N_obs = N_obs, N_site = N_site, N_trt_groups = N_trt_groups, 
-                 site = expdat$site, trt = as.numeric(expdat$trt), resp = resp)
-    
-    res <- mod$sample(
-      data = data, 
-      init = 0,
-      iter_warmup = draws,
-      iter_sampling = draws,
-      chains = 4, 
-      parallel_chains = 1,
-      adapt_delta = 0.8,
-      refresh = 0, 
-      max_treedepth=10,
-      output_dir=outdir
-      
-    )
-    print(j)
-    time <- toc()
-    time <- time$toc - time$tic
-    #pp_trt1 etc are the predictive prob that the treatment has the largest beta
-    results <- list(data.frame(res$summary(variables=c("pred_prob_trt","pp_trt2","pp_trt3","pp_trt4","ov_fut","beta_trt")),time=time),resp=list(resp))
+  )
+  print(j)
+  time <- toc()
+  time <- time$toc - time$tic
+  #pp_trt1 etc are the predictive prob that the treatment has the largest beta
+  results <- list(data.frame(res$summary(variables=c("pred_prob_trt","pp_trt2","pp_trt3","pp_trt4","ov_fut","beta_trt","probd_trt2","probd_trt3","probd_trt4","sigma_alpha")),time=time),resp=list(resp))
   
   return(results)
   
