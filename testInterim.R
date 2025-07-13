@@ -24,17 +24,20 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
   #when modelling, factor variable of trt
   sigma2 <- (pi ^ 2) / 3
   theta <- sqrt((rho*sigma2)/(1-rho))
-  names(theta)<-c("site.(Intercept)")
+  names(theta)<-c("ascendsite.(Intercept)")
   #fitting model
+  
   results <- vector()
-  resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|site), nsim = 1, family = binomial, 
+  #make a unique site number
+  expdat$siteunique <- paste0(expdat$trt,expdat$site)
+  expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
+  
+  resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|ascendsite), nsim = 1, family = binomial, 
                                              newdata = expdat,newparams = list(beta=beta, theta=theta)))
   
   resp <- as.vector(resp[,1])
   N_obs <- dim(expdat)[1]
-  expdat$siteunique <- paste0(expdat$trt,expdat$site)
-  expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
-  N_site <- length(unique(expdat$siteunique))
+  N_site <- length(unique(expdat$ascendsite))
   N_trt_groups <- length(unique(expdat$trt))
   data <- list(N_obs = N_obs, N_site = N_site, N_trt_groups = N_trt_groups, 
                site =  expdat$ascendsite, trt = as.numeric(expdat$trt), resp = resp)
@@ -48,8 +51,9 @@ testInterim <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
     parallel_chains = 1,
     adapt_delta = 0.8,
     refresh = 0, 
-    max_treedepth=10,
-    output_dir=outdir
+    max_treedepth=10
+    #,
+    #output_dir=outdir
     
   )
   print(j)
