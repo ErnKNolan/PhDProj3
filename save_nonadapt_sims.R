@@ -1,8 +1,14 @@
 #Save the simulations into a readable form for testing power etc
 #For the nonadaptive simulations
-test <- readRDS(here("Data","simulations.RDS"))
+pacman::p_load(future,here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan,tidyr)
+test <- readRDS(here("Data","sims_nonadapt_newscopek25.RDS"))
 
-properties <- expand.grid(trt_eff_scen = c(5), ctrl_prop = c(0.1), icc = c(0.05,0.2), n_per_k = c(25,50,75), k = c(15,25),nblock=1)
+#new scope
+#properties <- expand.grid(trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(15),n_per_k = c(10,25,50),nblock=1)
+
+#new scope 25 clusters
+properties <- expand.grid(trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(25),n_per_k = c(10,25,50),nblock=1)
+
 
 #bind to properties
 properties <- rbind(properties) %>%
@@ -10,22 +16,26 @@ properties <- rbind(properties) %>%
                         trt_eff_scen == 2 ~ ctrl_prop+0.4,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0.4,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.4),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.4,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.3),
          t3 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.3,
                         trt_eff_scen == 2 ~ ctrl_prop+0.3,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0.1,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.35),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.35,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.2),
          t2 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.1,
                         trt_eff_scen == 2 ~ ctrl_prop+0.2,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.25),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.3,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.1),
          t1 = ctrl_prop,
-         draws = ifelse(n_per_k == 75,1250,750))
+         interim = floor(k/(nblock)))
+properties2 <- properties %>% mutate(row = row_number()) 
 
 nonadapt <- list()
-for(j in 1:21){
+for(j in 1:12){
   for(i in 1:2500){
     nonadapt[[length(nonadapt)+1]] <- test[[j]][[i]]
     nonadapt[[length(nonadapt)]]$sim <- i
@@ -33,6 +43,5 @@ for(j in 1:21){
   }
 }
 nonadapt <- bind_rows(nonadapt)
-properties2 <- properties %>% mutate(row = row_number()) 
 nonadapt_out <- merge(nonadapt,properties2,by.y=c("row"),by.x="property")
-saveRDS(nonadapt_out,here("Data","nonadapt_out.RDS"))
+saveRDS(nonadapt_out,here("Data","nonadapt_out_newscopek25.RDS"))
