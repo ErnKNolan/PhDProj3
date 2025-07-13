@@ -24,28 +24,34 @@ testFull <- function(t,expdat,rho,mod,outdir,int_dat,draws,...){
   #when modelling, factor variable of trt
   sigma2 <- (pi ^ 2) / 3
   theta <- sqrt((rho*sigma2)/(1-rho))
-  names(theta)<-c("site.(Intercept)")
+  names(theta)<-c("ascendsite.(Intercept)")
   #fitting model
   results <- vector()
+  #make a unique site number
+  expdat$siteunique <- paste0(expdat$trt,expdat$site)
+  expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
   
-  resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|site), nsim = 1, family = binomial, 
+  resp <- suppressMessages(simulate.formula( ~ factor(trt) + (1|ascendsite), nsim = 1, family = binomial, 
                                              newdata = expdat,newparams = list(beta=beta, theta=theta)))
+
   resp_dat <- cbind(expdat,resp) 
-  names(resp_dat) <- c("iid","site","trt","resp")
+  #need to remove them to merge, then regenerate
+  resp_dat <- resp_dat %>% dplyr::select(-siteunique,-ascendsite)
+  resp_dat <- resp_dat %>% rename(resp = sim_1)
   resp_dat <- merge(resp_dat,int_dat,by=c("iid","site","trt"),all.x=TRUE) %>%
     within(., resp <- ifelse(!is.na(resp.y), resp.y, resp.x)) %>%
     dplyr::select(-resp.x,-resp.y) %>% 
-    arrange(trt,site) %>%
-    mutate(site_unique = paste0(trt,site))
+    arrange(trt,site)
   
-expdat$siteunique <- paste0(expdat$trt,expdat$site)
-expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$siteunique)))
-  resp <- as.vector(resp_dat[,4])
-  N_obs <- dim(expdat)[1]
-  N_site <- length(unique(expdat$siteunique))
-  N_trt_groups <- length(unique(expdat$trt))
+  #making unique site again to make the merging above work (we drop them previously)
+  resp_dat$siteunique <- paste0(resp_dat$trt,resp_dat$site)
+  resp_dat$ascendsite <- as.integer(factor(resp_dat$siteunique,levels=unique(resp_dat$siteunique)))
+  #preparing the data to read into stan
+  N_obs <- dim(resp_dat)[1]
+  N_site <- length(unique(resp_dat$ascendsite))
+  N_trt_groups <- length(unique(resp_dat$trt))
   data <- list(N_obs = N_obs, N_site = N_site, N_trt_groups = N_trt_groups, 
-               site = expdat$ascendsite, trt = as.numeric(expdat$trt), resp = resp)
+               site = resp_dat$ascendsite, trt = as.numeric(resp_dat$trt), resp = resp_dat$resp)
   
   res <- mod$sample(
     data = data, 
@@ -56,8 +62,9 @@ expdat$ascendsite <- as.integer(factor(expdat$siteunique,levels=unique(expdat$si
     parallel_chains = 1,
     adapt_delta = 0.9,
     refresh = 0, 
-    max_treedepth=10,
-    output_dir=outdir
+    max_treedepth=10
+    #,
+    #output_dir=outdir
     
   )
   print(j)
