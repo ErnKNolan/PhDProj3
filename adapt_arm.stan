@@ -53,7 +53,7 @@ vector[N_site] b0_site = b0 + sigma_alpha*alpha_site_raw;//implies: random inter
  
 }
 model {
-  sigma_alpha~normal(0, 0.2);
+  sigma_alpha~normal(0, 0.4);
 
   b0~normal(0,2);
   theta_trt[1:N_trt_groups-1]~normal(0,2);
