@@ -1,45 +1,54 @@
 #Save the simulations into a readable form for testing power etc
 #For the adaptive simulations
-test <- readRDS(here("Data","simulations.RDS"))
+pacman::p_load(future,here,future.apply,tictoc,car,ggforce,rsimsum,dplyr,cmdstanr,rstan,tidyr)
 
-#The first interim is after either 3 or 5 clusters (out of 5 and 10)
-properties <- expand.grid(trt_eff_scen = c(2,3), ctrl_prop = c(0.1), icc = c(0.05,0.2), n_per_k = c(25,50,75), k = c(15,25),nblock=c(2,3)) 
+test <- readRDS(here("Data","sims_newscope_latestart.RDS"))
+
+#new scope
+properties <- expand.grid(nblock=c(2,3),trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(15),n_per_k = c(10,25,50))
+#new scope 25 clusters
+properties <- expand.grid(nblock=c(2,3),trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(25),n_per_k = c(10,25,50))
+#new scope late start
+properties <- expand.grid(nblock=c(3),trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(15,25),n_per_k = c(10,25,50))
+
 #bind to properties
 properties <- rbind(properties) %>%
   mutate(t4 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.5,
                         trt_eff_scen == 2 ~ ctrl_prop+0.4,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0.4,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.4),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.4,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.3),
          t3 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.3,
                         trt_eff_scen == 2 ~ ctrl_prop+0.3,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0.1,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.35),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.35,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.2),
          t2 = case_when(trt_eff_scen == 1 ~ ctrl_prop+0.1,
                         trt_eff_scen == 2 ~ ctrl_prop+0.2,
                         trt_eff_scen == 3 ~ ctrl_prop+0,
                         trt_eff_scen == 4 ~ ctrl_prop+0,
-                        trt_eff_scen == 5 ~ ctrl_prop+0.25),
+                        trt_eff_scen == 5 ~ ctrl_prop+0.3,
+                        trt_eff_scen == 6 ~ ctrl_prop+0.1),
          t1 = ctrl_prop,
          interim = floor(k/(nblock)))
-
 properties2 <- properties %>% mutate(row = row_number()) 
 
-trial_props <- list()
-for(j in 1:48){
-  for(i in seq(3,12500,5)){
-    trial_props[[length(trial_props)+1]] <- test[[j]][[i]]
-    trial_props[[length(trial_props)]]$sim <- (i+2)/5
-    trial_props[[length(trial_props)]]$property <- j
-  }
-}
-trial_props <- bind_rows(trial_props)
+#trial_props <- list()
+#for(j in 1:9){
+#  for(i in seq(3,12500,5)){
+#    trial_props[[length(trial_props)+1]] <- test[[j]][[i]]
+#    trial_props[[length(trial_props)]]$sim <- (i+2)/5
+#    trial_props[[length(trial_props)]]$property <- j
+#  }
+#}
+#trial_props <- bind_rows(trial_props)
 #saveRDS(trial_props,here("Data","adaptprob_trial_props.RDS"))
 
 #Take out the interim analyses
 interim <- list()
-for(j in 1:48){
+for(j in 1:24){
   for(i in seq(1,12500,5)){
     interim[[length(interim)+1]] <- test[[j]][[i]]
     interim[[length(interim)]]$sim <- (i+4)/5
@@ -51,7 +60,7 @@ interim <- bind_rows(interim)
 
 #Take out the full analyses
 tempd <- list()
-for(j in c(1)){
+for(j in c(1:24)){
   for(i in seq(2,12500,5)){
     tempd[[length(tempd)+1]] <- test[[j]][[i]]
     tempd[[length(tempd)]]$sim <- (i+3)/5
@@ -62,7 +71,7 @@ outsim <- bind_rows(tempd)
 
 #pull out the cluster data
 clusts <- list()
-for(j in c(1)){
+for(j in c(1:24)){
   for(i in seq(5,12500,5)){
     clusts[[length(clusts)+1]] <- test[[j]][[i]]
   }
@@ -85,8 +94,7 @@ clusters <- plyr::ldply(clusts, rbind) %>%
          stop_int2 = ifelse(interim2_arm2 == 0 & interim2_arm3 == 0 & interim2_arm4 == 0,1,0))
 
 outsim2 <- merge(outsim,clusters,by.x=c("property","sim"),by.y = c("property","sim"))
-saveRDS(clusters,here("Data","clusters.RDS"))
-saveRDS(outsim2,here("Data","prob_outsim.RDS"))
+saveRDS(outsim2,here("Data","outsim_newscope_latestart.RDS"))
 
 #sensitivity analysis 1st interim of 2 interim trials
 #Take out the interim analyses
