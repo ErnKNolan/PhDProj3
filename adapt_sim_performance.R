@@ -17,8 +17,6 @@ nonadapt_outk25 <- readRDS(here("Data","nonadapt_out_newscopek25.RDS")) %>% muta
 sim_pow <- bind_rows(outsim2,outsim2_k25,nonadapt_out,nonadapt_outk25)
 #primary adaptive scenarios
 adapt_dat <- bind_rows(outsim2,outsim2_k25)
-#to do the new scenarios
-#sim_pow <- bind_rows(outsim2,outsim_newscen,nonadapt_out) %>% filter(trt_eff_scen != 4,trt_eff_scen != 2)
 
 #Power for these sims-----------------------------------------------
 #Power defined as number of sims that trt4 is max eff more than 85% of time
@@ -33,7 +31,7 @@ trial_success <- sim_pow %>%
                      ((pp_trt2 >= 0.85 & interim1_arm2 > 0) | (pp_trt3 >= 0.85 & interim1_arm3 > 0) | (pp_trt4 >= 0.85 & interim1_arm4 > 0)) ~ 1, #1 interim trials 
                    trt_eff_scen == 3 & !is.na(interim1_arm2) & !is.na(interim2_arm2) &
                      ((pp_trt2 >= 0.85 & interim2_arm2 > 0) | (pp_trt3 >= 0.85 & interim2_arm3 > 0) | (pp_trt4 >= 0.85 & interim2_arm4 > 0)) ~ 1, #2 interim trials
-                   trt_eff_scen %in% c(2,5) ~ NA,#effect scenario
+                   trt_eff_scen %in% c(2,5,6) ~ NA,#effect scenario
                    .default = 0), 
          power = case_when(trt_eff_scen == 3 ~ NA,
                            trt_eff_scen %in% c(2,5,6) & is.na(interim1_arm2) & pp_trt4 >= 0.85 ~ 1, #fixed trials
@@ -184,10 +182,6 @@ nested_loop_plot(resdf = correct,
 dev.off()
 
 #Frequency of stops for futility and arm drops
-#if doing new scen:
-#outsim2 <- bind_rows(outsim2,outsim_newscen) %>% filter(trt_eff_scen != 4)
-
-
 stops <- adapt_dat  %>% group_by(property,nblock,icc,k,n_per_k,trt_eff_scen) %>% 
   filter(nblock != 1) %>%
   summarise(stop1 = mean(stop_int1 > 0, na.rm=TRUE),
@@ -196,7 +190,7 @@ stops <- adapt_dat  %>% group_by(property,nblock,icc,k,n_per_k,trt_eff_scen) %>%
          stop = ifelse(!is.na(stop2),stop1+stop2,stop1),
          Scenario = case_when(trt_eff_scen %in% c(2,6) ~ "Effect",
                               trt_eff_scen == 3 ~ "Null",
-                              trt_eff_scen == 5 ~ "Unclear opt"),
+                              trt_eff_scen == 5 ~ "Less clear optimal arm"),
          nint = nblock-1,
          k2 = factor(k, levels=c("25","15"))) %>% 
   ungroup() %>%
@@ -217,25 +211,28 @@ table_stops <- stops %>% rename(`N participants per cluster` = n_per_k) %>%
 #Save the table of stops
 write.csv(table_stops,here("Output","stops.csv"))
 
+#this relies on you having run adapt_sim_performance_newscen.R
+stops_newscen <- readRDS(here("Data","stops_newscen.RDS"))
+stops_2scens <- rbind(stops,stops_newscen)
 
 #plot arm drops and stops for futility
-png(filename=here("Output","stops_loopfig2.png"),width=10,height=6,res=300,units="in")
-nested_loop_plot(resdf = stops, 
+png(filename=here("Output","stops_loopfig2.png"),width=10.5,height=6,res=300,units="in")
+nested_loop_plot(resdf = stops_2scens, 
                  x = "n_per_k", steps = c("N interims","N clusters per arm","ICC","Scenario"),
-                 steps_y_base = -0.04, steps_y_height = 0.03, steps_y_shift = 0.06,
+                 steps_y_base = -0.017, steps_y_height = 0.02, steps_y_shift = 0.02,
                  x_name = "Sample size per cluster", y_name = "Proportion of trials",
-                 spu_x_shift = 30,
+                 spu_x_shift = 20,
                  line_alpha = 0.6,
                  point_alpha = 0.8,
                  steps_values_annotate = TRUE, steps_annotation_size = 3, 
                  hline_intercept = c(0,1), 
-                 ylim = c(-0.35,0.30),
-                 y_breaks = c(0,0.1,0.2,0.3,0.4),
+                 ylim = c(-0.18,0.15),
+                 y_breaks = c(0,0.05,0.1,0.15),
                  post_processing = list(
                    add_custom_theme = list(
                      axis.text.x = element_text(angle = -90, 
                                                 vjust = 0.5, 
-                                                size = 8)))) +
+                                                size = 7.5)))) +
   scale_colour_manual(values=c("#B69DE9","#9E702B","#003331")) +
   labs(color="Inference",shape="Inference",linetype="Inference",size="Inference")
 dev.off()
