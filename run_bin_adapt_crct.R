@@ -19,6 +19,8 @@ source("assignClusterLate.R")
 set.seed(656038738)
 #sensitivity seed
 #set.seed(294761845)
+#sensitivity properties
+#properties <- expand.grid(nblock=c(2,3),trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(15,25),n_per_k = c(10,25,50))
 #NEW SCOPE
 #properties <- expand.grid(nblock=c(2,3),trt_eff_scen = c(3,6), ctrl_prop = c(0.1), icc = c(0.2,0.05), k = c(15),n_per_k = c(10,25,50))
 #new scope 25clust
